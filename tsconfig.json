@@ -2,7 +2,7 @@
     "compilerOptions": {
         "diagnostics": true,
         "extendedDiagnostics": true,
-        "module": "esnext",
+        "module": "commonjs",
         "target": "es5",
         "composite": true,
         "declaration": true,
