@@ -14,7 +14,7 @@
     "typings": "dist/types/index.d.ts",
     "scripts": {
         "clean": "npx rimraf dist .cache",
-        "purge": "npx rimraf dist .cache node_modules",
+        "purge": "npx rimraf dist .cache node_modules yarn.lock",
         "build": "npm run lint && npm run tsc",
         "lint": "eslint ./src/ --ext ts,json,mts --quiet --fix",
         "tsc": "npm-run-all -p -l -n tsc-cjs tsc-esm",

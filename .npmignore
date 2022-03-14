@@ -5,3 +5,6 @@ tsconfig.json
 babel.config.js
 jest.config.ts
 tsconfig-esm.json
+*.test.js
+*.test.js.map
+*.test.ts
