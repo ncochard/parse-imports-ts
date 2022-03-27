@@ -104,4 +104,19 @@ describe('parse', () => {
     ];
     expect(parse(input)).toEqual(expected);
   });
+  it('detect require function inside a function', () => {
+    const input = `
+    "use strict";
+    var __importDefault = (this && this.__importDefault) || function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.warn = exports.error = exports.debug = void 0;
+    var chalk_1 = __importDefault(require("chalk"));
+    `;
+    const expected = [
+      { name: 'chalk', type: ImportedPackageType.NormalImport },
+    ];
+    expect(parse(input)).toEqual(expected);
+  });
 });

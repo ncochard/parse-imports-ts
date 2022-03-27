@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import ts from 'typescript';
 import { ImportedPackage, ImportedPackageType } from './types';
 import { getPackageName } from './get-package-name';
@@ -46,59 +47,72 @@ function parseTsEqualsDeclaration(
   importDeclaration: ts.Node,
 ): ImportedPackage[] {
   const result: ImportedPackage[] = [];
-  let index = 0;
+  const children: ts.Node[] = [];
   ts.forEachChild(importDeclaration, (child: ts.Node) => {
-    if (index === 0 && !ts.isImportClause(child)) {
-      return;
-    }
-    const type = ImportedPackageType.NormalImport;
-    if (index === 1 && ts.isStringLiteral(child)) {
-      result.push({
-        name: getPackageName(child.text),
-        type,
-      });
-    }
-    index += 1;
+    children.push(child);
   });
+  if (children.length === 2) {
+    if (ts.isImportClause(children[0]) && ts.isStringLiteral(children[1])) {
+      result.push({
+        name: getPackageName(children[1].text),
+        type: ImportedPackageType.NormalImport,
+      });
+    } else {
+      children.forEach((child) => result.push(...parseTsNode(child)));
+    }
+  } else {
+    children.forEach((child) => result.push(...parseTsNode(child)));
+  }
   return result;
 }
 
 function parseTsCallExpression(callExpression: ts.Node): ImportedPackage[] {
   const type = ImportedPackageType.NormalImport;
   const result: ImportedPackage[] = [];
-  let index = 0;
   const isDynamicImport = (child: ts.Node) => child.kind === ts.SyntaxKind.ImportKeyword;
   const isRequire = (child: ts.Node) => ts.isIdentifier(child) && child.getText() === 'require';
   const isImport = (child: ts.Node) => isDynamicImport(child) || isRequire(child);
+  const children: ts.Node[] = [];
   ts.forEachChild(callExpression, (child: ts.Node) => {
-    if (index === 0 && !isImport(child)) {
-      return;
-    }
-    if (index === 1 && ts.isStringLiteral(child)) {
+    children.push(child);
+  });
+  if (children.length === 2) {
+    if (isImport(children[0]) && ts.isStringLiteral(children[1])) {
       result.push({
-        name: getPackageName(child.text),
+        name: getPackageName(children[1].text),
         type,
       });
+    } else {
+      children.forEach((child) => result.push(...parseTsNode(child)));
     }
-    index += 1;
-  });
+  } else {
+    children.forEach((child) => result.push(...parseTsNode(child)));
+  }
+  return result;
+}
+
+function parseTsNode(node: ts.Node): ImportedPackage[] {
+  const result: ImportedPackage[] = [];
+  if (ts.isExportDeclaration(node)) {
+    result.push(...parseTsExportDeclaration(node));
+  } else if (ts.isImportDeclaration(node)) {
+    result.push(...parseTsImportDeclaration(node));
+  } else if (ts.isImportEqualsDeclaration(node)) {
+    result.push(...parseTsEqualsDeclaration(node));
+  } else if (ts.isCallExpression(node)) {
+    result.push(...parseTsCallExpression(node));
+  } else {
+    ts.forEachChild(node, (child: ts.Node) => {
+      result.push(...parseTsNode(child));
+    });
+  }
   return result;
 }
 
 function parseTsSourceFile(node: ts.Node): ImportedPackage[] {
   const result: ImportedPackage[] = [];
   ts.forEachChild(node, (child: ts.Node) => {
-    if (ts.isExportDeclaration(child)) {
-      result.push(...parseTsExportDeclaration(child));
-    } else if (ts.isImportDeclaration(child)) {
-      result.push(...parseTsImportDeclaration(child));
-    } else if (ts.isImportEqualsDeclaration(child)) {
-      result.push(...parseTsEqualsDeclaration(child));
-    } else if (ts.isCallExpression(child)) {
-      result.push(...parseTsCallExpression(child));
-    } else {
-      result.push(...parseTsSourceFile(child));
-    }
+    result.push(...parseTsNode(child));
   });
   return result;
 }
