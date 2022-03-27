@@ -5,7 +5,7 @@ node_js:
   - 14
 script:
   - yarn build
-  - yarn start
+  - yarn test
 branches:
   except:
     - master
