@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import ts, { SyntaxKind } from 'typescript';
+import ts from 'typescript';
 import { ImportedPackage, ImportedPackageType } from './types';
 import { getPackageName } from './get-package-name';
 import { dedupe } from './dedupe';
