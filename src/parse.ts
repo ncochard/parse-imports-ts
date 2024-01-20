@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import ts from 'typescript';
+import ts, { SyntaxKind } from 'typescript';
 import { ImportedPackage, ImportedPackageType } from './types';
 import { getPackageName } from './get-package-name';
 import { dedupe } from './dedupe';
@@ -21,6 +21,30 @@ function parseTsExportDeclaration(
   return result;
 }
 
+function parseTsNamedImports(
+  importClause: ts.Node,
+): ImportedPackageType {
+  let type = ImportedPackageType.TypeImport;
+  ts.forEachChild(importClause, (child: ts.Node) => {
+    if (ts.isImportSpecifier(child) && !child.isTypeOnly) {
+      type = ImportedPackageType.NormalImport;
+    }
+  });
+  return type;
+}
+
+function parseTsImportClause(
+  importClause: ts.Node,
+): ImportedPackageType {
+  let type = ImportedPackageType.NormalImport;
+  ts.forEachChild(importClause, (child: ts.Node) => {
+    if (ts.isNamedImports(child)) {
+      type = parseTsNamedImports(child);
+    }
+  });
+  return type;
+}
+
 function parseTsImportDeclaration(
   importDeclaration: ts.Node,
 ): ImportedPackage[] {
@@ -30,6 +54,8 @@ function parseTsImportDeclaration(
     if (ts.isImportClause(child)) {
       if (ts.isTypeOnlyImportOrExportDeclaration(child)) {
         type = ImportedPackageType.TypeImport;
+      } else {
+        type = parseTsImportClause(child);
       }
     }
     if (ts.isStringLiteral(child)) {
