@@ -2,6 +2,29 @@ import { parse } from './parse';
 import { ImportedPackageType } from './types';
 
 describe('parse', () => {
+  it('detect mixed type and non-type imports', () => {
+    const input = [
+      "import { type Type0 } from 'some-package';",
+      "import { Object4  } from 'some-package';",
+    ];
+    const expected = [
+      { name: 'some-package', type: ImportedPackageType.NormalImport },
+    ];
+    expect(parse(input.join('\n'))).toEqual(expected);
+  });
+  it('detect nested type imports', () => {
+    const input = [
+      "import { type Type0 } from 'some-package';",
+      "import { type Type1, type Type2  } from 'some-other-package';",
+      "import { type Type3, Object4  } from 'some-non-type-package';",
+    ];
+    const expected = [
+      { name: 'some-package', type: ImportedPackageType.TypeImport },
+      { name: 'some-other-package', type: ImportedPackageType.TypeImport },
+      { name: 'some-non-type-package', type: ImportedPackageType.NormalImport },
+    ];
+    expect(parse(input.join('\n'))).toEqual(expected);
+  });
   it('detect nothing for empty string', () => {
     expect(parse('')).toEqual([]);
   });
