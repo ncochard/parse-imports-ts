@@ -2,6 +2,19 @@ import { parse } from './parse';
 import { ImportedPackageType } from './types';
 
 describe('parse', () => {
+  it('detect type with an alias', () => {
+    const input = [
+      "import { type AAA as XXX } from 'some-package-1';",
+      "import { type BBB as YYY, type CCC } from 'some-package-2';",
+      "import { DDD } from 'some-package-3';",
+    ];
+    const expected = [
+      { name: 'some-package-1', type: ImportedPackageType.TypeImport },
+      { name: 'some-package-2', type: ImportedPackageType.TypeImport },
+      { name: 'some-package-3', type: ImportedPackageType.NormalImport },
+    ];
+    expect(parse(input.join('\n'))).toEqual(expected);
+  });
   it('detect mixed type and non-type imports', () => {
     const input = [
       "import { type Type0 } from 'some-package';",
